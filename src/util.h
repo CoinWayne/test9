@@ -12,9 +12,8 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#else
-typedef int pid_t; /* define for Windows compatibility */
 #endif
+
 #include <map>
 #include <vector>
 #include <string>
@@ -30,13 +29,15 @@ typedef int pid_t; /* define for Windows compatibility */
 
 #include "netbase.h" // for AddTimeData
 
+// to obtain PRId64 on some old systems
+#define __STDC_FORMAT_MACROS 1
+
 #include <stdint.h>
 #include <inttypes.h>
 
-static const int64_t COIN = 1000000;
-static const int64_t CENT = 10000;
+static const int64_t COIN = 100000000;
+static const int64_t CENT = 1000000;
 
-// #define loop                for (;;)
 #define BEGIN(a)            ((char*)&(a))
 #define END(a)              ((char*)&((&(a))[1]))
 #define UBEGIN(a)           ((unsigned char*)&(a))
@@ -47,18 +48,6 @@ static const int64_t CENT = 10000;
 #define CVOIDBEGIN(a)        ((const void*)&(a))
 #define UINTBEGIN(a)        ((uint32_t*)&(a))
 #define CUINTBEGIN(a)        ((const uint32_t*)&(a))
-
-#ifndef PRI64d
-#if defined(_MSC_VER) || defined(__MSVCRT__)
-#define PRI64d "I64d"
-#define PRI64u "I64u"
-#define PRI64x "I64x"
-#else
-#define PRI64d "lld"
-#define PRI64u "llu"
-#define PRI64x "llx"
-#endif
-#endif
 
 #ifndef THROW_WITH_STACKTRACE
 #define THROW_WITH_STACKTRACE(exception)  \
@@ -117,13 +106,16 @@ T* alignup(T* p)
 #endif
 #else
 #define MAX_PATH            1024
-inline void Sleep(int64_t n)
-{
-    /*Boost has a year 2038 problem— if the request sleep time is past epoch+2^31 seconds the sleep returns instantly.
-      So we clamp our sleeps here to 10 years and hope that boost is fixed by 2028.*/
-    boost::thread::sleep(boost::get_system_time() + boost::posix_time::milliseconds(n>315576000000LL?315576000000LL:n));
-}
 #endif
+
+inline void MilliSleep(int64_t n)
+{
+#if BOOST_VERSION >= 105000
+    boost::this_thread::sleep_for(boost::chrono::milliseconds(n));
+#else
+    boost::this_thread::sleep(boost::posix_time::milliseconds(n));
+#endif
+}
 
 /* This GNU C extension enables the compiler to check the format string against the parameters provided.
  * X is the number of the "format string" parameter, and Y is the number of the first variadic parameter.
@@ -211,13 +203,14 @@ void ParseParameters(int argc, const char*const argv[]);
 bool WildcardMatch(const char* psz, const char* mask);
 bool WildcardMatch(const std::string& str, const std::string& mask);
 void FileCommit(FILE *fileout);
-int GetFilesize(FILE* file);
 bool RenameOver(boost::filesystem::path src, boost::filesystem::path dest);
 boost::filesystem::path GetDefaultDataDir();
 const boost::filesystem::path &GetDataDir(bool fNetSpecific = true);
 boost::filesystem::path GetConfigFile();
 boost::filesystem::path GetPidFile();
+#ifndef WIN32
 void CreatePidFile(const boost::filesystem::path &path, pid_t pid);
+#endif
 void ReadConfigFile(std::map<std::string, std::string>& mapSettingsRet, std::map<std::string, std::vector<std::string> >& mapMultiSettingsRet);
 #ifdef WIN32
 boost::filesystem::path GetSpecialFolderPath(int nFolder, bool fCreate = true);
@@ -229,7 +222,7 @@ uint256 GetRandHash();
 int64_t GetTime();
 void SetMockTime(int64_t nMockTimeIn);
 int64_t GetAdjustedTime();
-long hex2long(const char* hexString);
+int64_t GetTimeOffset();
 std::string FormatFullVersion();
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments);
 void AddTimeData(const CNetAddr& ip, int64_t nTime);
@@ -245,7 +238,7 @@ void runCommand(std::string strCommand);
 
 inline std::string i64tostr(int64_t n)
 {
-    return strprintf("%"PRI64d, n);
+    return strprintf("%"PRId64, n);
 }
 
 inline std::string itostr(int n)
@@ -289,6 +282,16 @@ inline int64_t roundint64(double d)
 inline int64_t abs64(int64_t n)
 {
     return (n >= 0 ? n : -n);
+}
+
+inline std::string leftTrim(std::string src, char chr)
+{
+    std::string::size_type pos = src.find_first_not_of(chr, 0);
+
+    if(pos > 0)
+        src.erase(0, pos);
+
+    return src;
 }
 
 template<typename T>
@@ -532,6 +535,20 @@ inline uint160 Hash160(const std::vector<unsigned char>& vch)
     return hash2;
 }
 
+/**
+ * Timing-attack-resistant comparison.
+ * Takes time proportional to length
+ * of first argument.
+ */
+template <typename T>
+bool TimingResistantEqual(const T& a, const T& b)
+{
+    if (b.size() == 0) return a.size() == 0;
+    size_t accumulator = a.size() ^ b.size();
+    for (size_t i = 0; i < a.size(); i++)
+        accumulator |= a[i] ^ b[i%b.size()];
+    return accumulator == 0;
+}
 
 /** Median filter over a stream of values.
  * Returns the median of the last N numbers
@@ -542,7 +559,6 @@ private:
     std::vector<T> vValues;
     std::vector<T> vSorted;
     unsigned int nSize;
-    T tInitial;
 public:
     CMedianFilter(unsigned int size, T initial_value):
         nSize(size)
@@ -550,7 +566,6 @@ public:
         vValues.reserve(size);
         vValues.push_back(initial_value);
         vSorted = vValues;
-        tInitial = initial_value;
     }
 
     void input(T value)
@@ -560,27 +575,6 @@ public:
             vValues.erase(vValues.begin());
         }
         vValues.push_back(value);
-
-        vSorted.resize(vValues.size());
-        std::copy(vValues.begin(), vValues.end(), vSorted.begin());
-        std::sort(vSorted.begin(), vSorted.end());
-    }
-
-    // remove last instance of a value
-    void removeLast(T value)
-    {
-        for (int i = vValues.size()-1; i >= 0; --i)
-        {
-            if (vValues[i] == value)
-            {
-                vValues.erase(vValues.begin()+i);
-                break;
-            }
-        }
-        if (vValues.empty())
-        {
-            vValues.push_back(tInitial);
-        }
 
         vSorted.resize(vValues.size());
         std::copy(vValues.begin(), vValues.end(), vSorted.begin());
