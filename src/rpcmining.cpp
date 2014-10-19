@@ -69,7 +69,7 @@ Value getsubsidy(CWallet* pWallet, const Array& params, bool fHelp)
             "getsubsidy [nTarget]\n"
             "Returns proof-of-work subsidy value for the specified value of target.");
 
-    return ValueFromAmount((uint64_t)GetProofOfWorkReward());
+    return ValueFromAmount((uint64_t)GetProofOfWorkReward(0));
 }
 
 Value getmininginfo(CWallet* pWallet, const Array& params, bool fHelp)
@@ -93,6 +93,7 @@ Value getmininginfo(CWallet* pWallet, const Array& params, bool fHelp)
     obj.push_back(Pair("difficulty",    diff));
 
     obj.push_back(Pair("errors",        GetWarnings("statusbar")));
+	obj.push_back(Pair("blockvalue",    (uint64_t)GetProofOfWorkReward(0)));
     obj.push_back(Pair("netmhashps",     GetPoWMHashPS()));
     obj.push_back(Pair("netstakeweight", GetPoSKernelPS()));
     obj.push_back(Pair("generate",      GetBoolArg("-gen")));
@@ -124,7 +125,10 @@ Value getworkex(CWallet* pWallet, const Array& params, bool fHelp)
 
     if (IsInitialBlockDownload())
         throw JSONRPCError(-10, "ColossusCoin is downloading blocks...");
-
+		
+    if (pindexBest->nHeight >= LAST_POW_BLOCK) 
+        throw JSONRPCError(RPC_MISC_ERROR, "No more PoW blocks"); 
+ 
     typedef map<uint256, pair<CBlock*, CScript> > mapNewBlock_t;
     static mapNewBlock_t mapNewBlock;
     static vector<CBlock*> vNewBlock;
@@ -258,6 +262,9 @@ Value getwork(CWallet* pWallet, const Array& params, bool fHelp)
 
     if (IsInitialBlockDownload())
         throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "ColossusCoin is downloading blocks...");
+
+    if (pindexBest->nHeight >= LAST_POW_BLOCK) 
+        throw JSONRPCError(RPC_MISC_ERROR, "No more PoW blocks");  
 
     typedef map<uint256, pair<CBlock*, CScript> > mapNewBlock_t;
     static mapNewBlock_t mapNewBlock;    // FIXME: thread safety
@@ -402,6 +409,9 @@ Value getblocktemplate(CWallet* pWallet, const Array& params, bool fHelp)
 
     if (IsInitialBlockDownload())
         throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "ColossusCoin is downloading blocks...");
+		
+    if (pindexBest->nHeight >= LAST_POW_BLOCK) 
+        throw JSONRPCError(RPC_MISC_ERROR, "No more PoW blocks"); 
 
     static CReserveKey reservekey(pWallet);
 

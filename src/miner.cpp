@@ -104,7 +104,7 @@ public:
 };
 
 // CreateNewBlock: create new block (without proof-of-work/proof-of-stake)
-CBlock* CreateNewBlock(CWallet* pwallet, bool fProofOfStake)
+CBlock* CreateNewBlock(CWallet* pwallet, bool fProofOfStake, int64_t nFees)
 {
     // Create new block
     auto_ptr<CBlock> pblock(new CBlock());
@@ -348,7 +348,12 @@ CBlock* CreateNewBlock(CWallet* pwallet, bool fProofOfStake)
         LogPrint("priority", "CreateNewBlock(): total size %u\n", nBlockSize);
 
         if (!fProofOfStake)
-            pblock->vtx[0].vout[0].nValue = GetProofOfWorkReward();
+        {
+            pblock->vtx[0].vout[0].nValue = GetProofOfWorkReward(nFees);
+        }
+
+        if (pFees)
+            *pFees = nFees;
 
         // Fill in header
         pblock->hashPrevBlock = pindexPrev->GetBlockHash();
@@ -776,13 +781,14 @@ void StakeMiner(CWallet *pwallet)
         //
         CBlockIndex* pindexPrev = pindexBest;
 
-        auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, true));
+		int64 nFees;
+        auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, true, &nFees));
         if (!pblock.get())
             return;
         IncrementExtraNonce(pblock.get(), pindexPrev, nExtraNonce);
 
         // Trying to sign a block
-        if (pblock->SignPoSBlock(*pwallet))
+        if (pblock->SignPoSBlock(*pwallet, nFees))
         {
             SetThreadPriority(THREAD_PRIORITY_NORMAL);
             CheckStake(pblock.get(), *pwallet);

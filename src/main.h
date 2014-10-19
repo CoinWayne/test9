@@ -40,32 +40,21 @@ static const unsigned int MAX_ORPHAN_TRANSACTIONS = MAX_BLOCK_SIZE/100;
 /** The maximum number of entries in an 'inv' protocol message */
 static const unsigned int MAX_INV_SZ = 50000;
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
-static const int64_t MIN_TX_FEE = 0.1 * CENT;
+static const int64_t MIN_TX_FEE = 50 * COIN;
 /** Fees smaller than this (in satoshi) are considered zero fee (for relaying) */
-static const int64_t MIN_RELAY_TX_FEE = 0.1 * CENT;
+static const int64_t MIN_RELAY_TX_FEE = 50 * COIN;
 /** No amount larger than this (in satoshi) is valid */
-static const int64_t MAX_MONEY = 120000000 * COIN;
-/** Base Rate for Proof of Work Reward */
-static const int64_t MAX_MINT_PROOF_OF_WORK = 5 * COIN;
-/** Base Rate for Proof of Stake Reward(Incorrect), kept for sync */
-static const int64_t MAX_MINT_PROOF_OF_STAKE = 10 * CENT; // Incorrect value Too small
-/** Base Rate for Proof of Stake Reward(Incorrect), kept for sync */
-static const int64_t MAX_MINT_PROOF_OF_STAKE_FIX = 1000 * CENT;// Incorrect value Too big
-/** Base Rate for Proof of Stake Reward 100% per year */
-static const int64_t MAX_MINT_PROOF_OF_STAKE_FIX2 = 100 * CENT; // Correct just right
+static const int64_t MAX_MONEY = 150000000000 * COIN;
+/** Base Rate for Proof of Stake Reward */
+static const int64_t MAX_MINT_PROOF_OF_STAKE = 5 * CENT;
 /** Transactions smaller then this are ignored */
 static const int64_t MIN_TXOUT_AMOUNT = MIN_TX_FEE;
 /** Split/Combine Threshold Max */
-static const int64_t MAX_SPLIT_AMOUNT = 20 * COIN;
-static const int64_t MAX_COMBINE_AMOUNT = MAX_SPLIT_AMOUNT * 2;
+static const int64_t MAX_SPLIT_AMOUNT = 25000 * COIN;
+static const int64_t MAX_COMBINE_AMOUNT = MAX_SPLIT_AMOUNT * 10;
+/** Last POW Block */
+static const int LAST_POW_BLOCK = 7200;
 
-
-/** Hard Fork Change Times */
-static const unsigned int PROTOCOL_SWITCH_TIME = 1371686400; // 20 Jun 2013 00:00:00
-static const unsigned int REWARD_SWITCH_TIME = 1369432800; // 25 May 2013 00:00:00
-static const unsigned int POS_REWARD_SWITCH_TIME = 1378684800; // 9 SEP 2013 00:00:00
-static const unsigned int POS_REWARD_FIX_TIME = 1383177600; // 31 OCT 2013 00:00:00
-static const unsigned int POS_REWARD_FIX_TIME2 = 1383606000; // 04 Nov 2013 23:00:00
 
 
 inline bool MoneyRange(int64_t nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
@@ -151,8 +140,8 @@ bool LoadExternalBlockFile(FILE* fileIn);
 void GenerateBitcoins(bool fGenerate, CWallet* pwallet);
 bool CheckProofOfWork(uint256 hash, unsigned int nBits);
 unsigned int GetNextTargetRequired(const CBlockIndex* pindexLast, bool fProofOfStake);
-int64_t GetProofOfWorkReward();
-int64_t GetProofOfStakeReward(int64_t nCoinAge, unsigned int nBits, unsigned int nTime ,bool bCoinYearOnly=false);
+int64_t GetProofOfWorkReward(int64_t nFees);
+int64_t GetProofOfStakeReward(int64_t nCoinAge, int64_t nFees, unsigned int nBits, unsigned int nTime ,bool bCoinYearOnly=false);
 unsigned int ComputeMinWork(unsigned int nBase, int64_t nTime);
 unsigned int ComputeMinStake(unsigned int nBase, int64_t nTime, unsigned int nBlockTime);
 
@@ -549,7 +538,7 @@ public:
     {
         // Large (in bytes) low-priority (new, small-coin) transactions
         // need a fee.
-        return dPriority > COIN * 2880 / 250;
+        return dPriority > COIN * 720 / 250;
     }
 
     int64_t GetMinFee(unsigned int nBlockSize=1, bool fAllowFree=false, enum GetMinFee_mode mode=GMF_BLOCK, unsigned int nBytes = 0) const;
@@ -880,21 +869,10 @@ public:
     // ppcoin: entropy bit for stake modifier if chosen by modifier
     unsigned int GetStakeEntropyBit(unsigned int nHeight) const
     {
-
-        // Protocol switch to support p2pool at ColossusCoin block #9689
-        if (nHeight >= 9689 || fTestNet)
-        {
             // Take last bit of block hash as entropy bit
             unsigned int nEntropyBit = ((GetHash().Get64()) & 1llu);
             LogPrint("stakemodifier", "GetStakeEntropyBit: nHeight=%u hashBlock=%s nEntropyBit=%u\n", nHeight, GetHash().ToString(), nEntropyBit);
             return nEntropyBit;
-        }
-        // Before ColossusCoin block #9689 - old protocol
-        uint160 hashSig = Hash160(vchBlockSig);
-        LogPrint("stakemodifier", "GetStakeEntropyBit: hashSig=%s", hashSig.ToString());
-        hashSig >>= 159; // take the first bit of the hash
-        LogPrint("stakemodifier", " entropybit=%d\n", hashSig.Get64());
-        return hashSig.Get64();
     }
 
     // ppcoin: two types of block: proof-of-work or proof-of-stake
@@ -1058,8 +1036,8 @@ public:
     bool CheckBlock(bool fCheckPOW=true, bool fCheckMerkleRoot=true, bool fCheckSig=true) const;
     bool AcceptBlock();
     bool GetCoinAge(uint64_t& nCoinAge) const; // ppcoin: calculate total coin age spent in block
-    bool SignBlock(const CKeyStore& keystore);
-    bool SignPoSBlock(CWallet& wallet);
+    bool SignBlock(const CKeyStore& keystore, int64_t nFees);
+    bool SignPoSBlock(CWallet& wallet, int64_t nFees);
     bool CheckBlockSignature(bool fProofOfStake) const;
 
 private:
