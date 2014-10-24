@@ -218,7 +218,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
         LOCK2(cs_main, wallet->cs_wallet);
 
         // Sendmany
-        std::vector<std::pair<CScript, qint64> > vecSend;
+        std::vector<std::pair<CScript, int64_t> > vecSend;
         foreach(const SendCoinsRecipient &rcp, recipients)
         {
             CScript scriptPubKey;
@@ -228,7 +228,7 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(const QList<SendCoinsRecipie
 
         CWalletTx wtx;
         CReserveKey keyChange(wallet);
-        qint64 nFeeRequired = 0;
+        int64_t nFeeRequired = 0;
         bool fCreated = wallet->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, false, coinControl);
 
         if(!fCreated)
@@ -326,6 +326,7 @@ bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase, b
         {
            // Lock as Requested by user
            rc = wallet->Lock();
+           wallet->fWalletUnlockMintOnly=false;
            fStopStaking=true;
            MilliSleep(1000);
            pWalletManager->RestartStakeMiner();
@@ -443,7 +444,7 @@ bool WalletModel::importWallet(const QString &filename)
     return ImportWallet(wallet, filename.toLocal8Bit().data());
 }
 
-void WalletModel::getStakeWeight(quint64& nMinWeight, quint64& nMaxWeight, quint64& nWeight)
+void WalletModel::getStakeWeight(uint64_t& nMinWeight, uint64_t& nMaxWeight, uint64_t& nWeight)
 {
     TRY_LOCK(cs_main, lockMain);
     if (!lockMain)
@@ -468,7 +469,7 @@ quint64 WalletModel::getTotStakeWeight()
     BOOST_FOREACH(const wallet_map::value_type& item, pWalletManager->GetWalletMap())
     {
         CWallet* pwallet = pWalletManager->GetWallet(item.first.c_str()).get();
-        quint64 nMinWeight = 0 ,nMaxWeight =  0, nWeight = 0;
+        uint64_t nMinWeight = 0 ,nMaxWeight =  0, nWeight = 0;
         pwallet->GetStakeWeight(*pwallet, nMinWeight,nMaxWeight,nWeight);
 
         nTotWeight+=nWeight;
@@ -476,17 +477,17 @@ quint64 WalletModel::getTotStakeWeight()
     return nTotWeight;
 }
 
-void WalletModel::getStakeWeightFromValue(const qint64& nTime, const qint64& nValue, quint64& nWeight)
+void WalletModel::getStakeWeightFromValue(const int64_t& nTime, const int64_t& nValue, uint64_t& nWeight)
 {
     wallet->GetStakeWeightFromValue(nTime, nValue, nWeight);
 }
 
-void WalletModel::checkWallet(int& nMismatchSpent, qint64& nBalanceInQuestion, int& nOrphansFound)
+void WalletModel::checkWallet(int& nMismatchSpent, int64_t& nBalanceInQuestion, int& nOrphansFound)
 {
     wallet->FixSpentCoins(nMismatchSpent, nBalanceInQuestion, nOrphansFound, true);
 }
 
-void WalletModel::repairWallet(int& nMismatchSpent, qint64& nBalanceInQuestion, int& nOrphansFound)
+void WalletModel::repairWallet(int& nMismatchSpent, int64_t& nBalanceInQuestion, int& nOrphansFound)
 {
     wallet->FixSpentCoins(nMismatchSpent, nBalanceInQuestion, nOrphansFound);
 }

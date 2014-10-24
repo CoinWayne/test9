@@ -1835,25 +1835,12 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     { 
         if (!SignSignature(*this, *pcoin, txNew, nIn++)) 
             return error("CreateCoinStake : failed to sign coinstake"); 
-        }
-
-        // Limit size
-        unsigned int nBytes = ::GetSerializeSize(txNew, SER_NETWORK, PROTOCOL_VERSION);
-        if (nBytes >= MAX_BLOCK_SIZE_GEN/5)
-            return error("CreateCoinStake : exceeded coinstake size limit");
-
-        // Check enough fee is paid
-        if (nMinFee < txNew.GetMinFee() - MIN_TX_FEE)
-        {
-            nMinFee = txNew.GetMinFee() - MIN_TX_FEE;
-            continue; // try signing again
-        }
-        else
-        {
-            LogPrint("coinstake", "CreateCoinStake : fee for coinstake %s\n", FormatMoney(nMinFee));
-            break;
-        }
     }
+
+    // Limit size
+    unsigned int nBytes = ::GetSerializeSize(txNew, SER_NETWORK, PROTOCOL_VERSION);
+    if (nBytes >= MAX_BLOCK_SIZE_GEN/5)
+        return error("CreateCoinStake : exceeded coinstake size limit");
 
     // Successfully generated coinstake
     return true;
@@ -2145,7 +2132,7 @@ bool CWallet::TopUpKeyPool(unsigned int nSize)
         if (nSize > 0)
             nTargetSize = nSize;
         else
-            nTargetSize = max(GetArg("-keypool", 100), 0LL);
+            nTargetSize = max(GetArg("-keypool", 100), (int64_t)0);
 
         while (setKeyPool.size() < (nTargetSize + 1))
         {

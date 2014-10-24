@@ -236,8 +236,9 @@ Value getworkex(CWallet* pWallet, const Array& params, bool fHelp)
             CDataStream(coinbase, SER_NETWORK, PROTOCOL_VERSION) >> pblock->vtx[0]; // FIXME - HACK!
 
         pblock->hashMerkleRoot = pblock->BuildMerkleTree();
+        int64_t nFees;
 
-        if (!pblock->SignBlock(*pWallet))
+        if (!pblock->SignBlock(*pWallet, nFees))
             throw JSONRPCError(-100, "Unable to sign block, wallet locked?");
 
         return CheckWork(pblock, *pWallet, reservekey);
@@ -356,7 +357,9 @@ Value getwork(CWallet* pWallet, const Array& params, bool fHelp)
         pblock->vtx[0].vin[0].scriptSig = mapNewBlock[pdata->hashMerkleRoot].second;
         pblock->hashMerkleRoot = pblock->BuildMerkleTree();
 
-        if (!pblock->SignBlock(*pWallet))
+        int64_t nFees;
+
+        if (!pblock->SignBlock(*pWallet, nFees))
             throw JSONRPCError(-100, "Unable to sign block, wallet locked?");
 
         return CheckWork(pblock, *pWallet, reservekey);
@@ -525,6 +528,7 @@ Value getblocktemplate(CWallet* pWallet, const Array& params, bool fHelp)
 }
 
 Value submitblock(CWallet* pWallet, const Array& params, bool fHelp)
+
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
@@ -543,7 +547,8 @@ Value submitblock(CWallet* pWallet, const Array& params, bool fHelp)
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Block decode failed");
     }
 
-    if (!block.SignBlock(*pWallet))
+    int64_t nFees;
+    if (!block.SignBlock(*pWallet, nFees))
         throw JSONRPCError(-100, "Unable to sign block, wallet locked?");
 
     bool fAccepted = ProcessBlock(NULL, &block);

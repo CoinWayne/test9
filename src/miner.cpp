@@ -104,7 +104,7 @@ public:
 };
 
 // CreateNewBlock: create new block (without proof-of-work/proof-of-stake)
-CBlock* CreateNewBlock(CWallet* pwallet, bool fProofOfStake, int64_t nFees)
+CBlock* CreateNewBlock(CWallet* pwallet, bool fProofOfStake, int64_t* pFees)
 {
     // Create new block
     auto_ptr<CBlock> pblock(new CBlock());
@@ -557,7 +557,8 @@ void BitcoinMiner(CWallet *pwallet)
         unsigned int nTransactionsUpdatedLast = nTransactionsUpdated;
         CBlockIndex* pindexPrev = pindexBest;
 
-        auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, false));
+        int64_t nFees;
+        auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, false, &nFees));
         if (!pblock.get())
             return;
         IncrementExtraNonce(pblock.get(), pindexPrev, nExtraNonce);
@@ -610,7 +611,7 @@ void BitcoinMiner(CWallet *pwallet)
                     // Found a solution
                     pblock->nNonce = nNonceFound;
                     assert(result == pblock->GetHash());
-                    if (!pblock->SignBlock(*pwallet))
+                    if (!pblock->SignBlock(*pwallet, nFees))
                     {
                         break;
                     }
@@ -781,7 +782,7 @@ void StakeMiner(CWallet *pwallet)
         //
         CBlockIndex* pindexPrev = pindexBest;
 
-		int64 nFees;
+        int64_t nFees;
         auto_ptr<CBlock> pblock(CreateNewBlock(pwallet, true, &nFees));
         if (!pblock.get())
             return;

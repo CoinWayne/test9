@@ -79,8 +79,8 @@ int64_t nHPSTimerStart;
 // Settings
 int64_t nTransactionFee = MIN_TX_FEE;
 int64_t nMinimumInputValue = MIN_TX_FEE;
-int64_t nSplitThreshold = GetProofOfWorkReward();
-int64_t nCombineThreshold = GetProofOfWorkReward() * 2;
+int64_t nSplitThreshold = 25000;
+int64_t nCombineThreshold = 250000;
 extern enum Checkpoints::CPMode CheckpointsMode;
 
 
@@ -1079,11 +1079,11 @@ uint256 WantedByOrphan(const CBlock* pblockOrphan)
 int64_t GetProofOfWorkReward(int64_t nFees)
 {
     int nHeight = pindexBest->nHeight + 1;
-    int64 nSubsidy = 1000 * COIN;
+    int64_t nSubsidy = 1000 * COIN;
 
 	if(nHeight == 1)
 	{
-		nSubsidy = 19000000000 * COIN;	// 19 billion coins, that all pow coins
+        nSubsidy = 19000000000 * COIN;	// 19 billion coins, that all pow coins
 	}
 
     return nSubsidy + nFees;
@@ -1689,7 +1689,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck)
         if (!vtx[1].GetCoinAge(txdb, nCoinAge)) 
             return error("ConnectBlock() : %s unable to get coin age for coinstake", GetHash().ToString().substr(0,10));
  
-        int64_t nCalculatedStakeReward = GetProofOfStakeReward(nCoinAge, nFees, pindexBlock->nBits, nTime); 
+        int64_t nCalculatedStakeReward = GetProofOfStakeReward(nCoinAge, nFees, pindex->nBits, nTime);
  
         if (nStakeReward > nCalculatedStakeReward) 
             return DoS(100, error("ConnectBlock() : coinstake pays too much(actual=%d vs calculated=%d)", nStakeReward, nCalculatedStakeReward));

@@ -282,13 +282,13 @@ bool CheckStakeKernelHash(unsigned int nBits, const CBlock& blockFrom, unsigned 
     int64_t nValueIn = txPrev.vout[prevout.n].nValue;
     uint256 hashBlockFrom = blockFrom.GetHash();
 
-    // v0.3 protocol kernel hash weight starts from 0 at the 10-day min age
+    // v0.3 protocol kernel hash weight starts from 0 at the 7-day min age
     // this change increases active coins participating the hash and helps
     // to secure the network when proof-of-stake difficulty is low
     // Tranz We are going to want to change this to fix the max weight. Requires a hard fork
     // New Code:
     // int64_t nTimeWeight = min((int64_t)nTimeTx - txPrev.nTime - nStakeMinAge, (int64_t)nStakeMaxAge);
-    int64_t nTimeWeight = ((int64_t)nTimeTx - txPrev.nTime - nStakeMinAge, (int64_t)nStakeMaxAge);
+    int64_t nTimeWeight = min((int64_t)nTimeTx - txPrev.nTime - nStakeMinAge, (int64_t)nStakeMaxAge);
     CBigNum bnCoinDayWeight = CBigNum(nValueIn) * nTimeWeight / COIN / (24 * 60 * 60);
     targetProofOfStake = CBigNum(bnCoinDayWeight * bnTargetPerCoinDay).getuint256();
 

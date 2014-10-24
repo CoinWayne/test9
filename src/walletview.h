@@ -9,6 +9,8 @@
 
 #include <QStackedWidget>
 
+#include "util.h"
+
 class BitcoinGUI;
 class TransactionTableModel;
 class ClientModel;
@@ -157,7 +159,7 @@ public slots:
     /** Add up all loaded wallets and show total balance */
     void setTotBalance(bool fEmit=true);
     /** Give user information about staking */
-    void getStakeWeight(quint64& nMinWeight, quint64& nMaxWeight, quint64& nWeight);
+    void getStakeWeight(uint64_t& nMinWeight, uint64_t& nMaxWeight, uint64_t& nWeight);
     quint64 getTotStakeWeight();
     /** Give user information about reserve balance */
     quint64 getReserveBalance();
