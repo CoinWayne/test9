@@ -112,7 +112,7 @@ public:
     /** Give user information about reserve balance */
     quint64 getReserveBalance();
     // PoS Information about value and time
-    void getStakeWeightFromValue(const int64_t64& nTime, const int64_t& nValue, uint64_t& nWeight);
+    void getStakeWeightFromValue(const int64_t& nTime, const int64_t& nValue, uint64_t& nWeight);
     // setStakeForCharity Wallet Settings
     void setStakeForCharity(bool fStakeForCharity, int& nStakeForCharityPercent,
                             CBitcoinAddress& strStakeForCharityAddress,
