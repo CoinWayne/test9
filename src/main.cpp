@@ -2705,12 +2705,12 @@ bool LoadBlockIndex(bool fAllowNew)
         block.nVersion = 1;
         block.nTime    = 1414480500;
         block.nBits    = bnProofOfWorkLimit.GetCompact();
-        block.nNonce   = 0;
+        block.nNonce   = 526848;
         if (fTestNet)
         {
             block.nTime    = 1414480500;
             block.nBits    = bnProofOfWorkLimit.GetCompact();
-            block.nNonce   = 0;
+            block.nNonce   = 526848;
         }
 
        if (true  && (block.GetHash() != hashGenesisBlock)) {
@@ -2739,11 +2739,11 @@ bool LoadBlockIndex(bool fAllowNew)
 
         if (fTestNet)
         {
-           assert(block.hashMerkleRoot == uint256("0x482bfc354988c49c52fc05964221cd0424e07235ca3eb3189d916401f4cacfba"));
+           assert(block.hashMerkleRoot == uint256("0x6727a616c9caf28dafa9ecdca236ef728b466b253c1ec994bcd1f1f3842f7f53"));
         }
         else
         {
-           assert(block.hashMerkleRoot == uint256("0x482bfc354988c49c52fc05964221cd0424e07235ca3eb3189d916401f4cacfba"));
+           assert(block.hashMerkleRoot == uint256("0x6727a616c9caf28dafa9ecdca236ef728b466b253c1ec994bcd1f1f3842f7f53"));
         }
 
         assert(block.GetHash() == (!fTestNet ? hashGenesisBlock : hashGenesisBlockTestNet));
