@@ -45,7 +45,7 @@ static CBigNum bnProofOfStakeLimitTestNet(~uint256(0) >> 20);
 unsigned int nStakeMinAge = 60 * 60 * 24 * 7; // minimum age for coin age - 10 days
 unsigned int nStakeMaxAge = 60 * 60 * 24 * 21; // stake age of full weight - 30 days
 unsigned int nStakeTargetSpacing = 2 * 60; // 2-minute block spacing
-int64_t nChainStartTime = 1371910049;
+int64_t nChainStartTime = 1414440500;
 int nCoinbaseMaturity = 5;
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
@@ -2703,14 +2703,14 @@ bool LoadBlockIndex(bool fAllowNew)
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-        block.nTime    = 1374635824;
+        block.nTime    = 1414440500;
         block.nBits    = bnProofOfWorkLimit.GetCompact();
-        block.nNonce   = 4215582;
+        block.nNonce   = 739445;
         if (fTestNet)
         {
-            block.nTime    = 1380383684;
+            block.nTime    = 1414440500;
             block.nBits    = bnProofOfWorkLimit.GetCompact();
-            block.nNonce   = 47018;
+            block.nNonce   = 739445;
         }
 
 	   if (true  && (block.GetHash() != hashGenesisBlock)) {
@@ -2739,11 +2739,11 @@ bool LoadBlockIndex(bool fAllowNew)
 
         if (fTestNet)
         {
-           assert(block.hashMerkleRoot == uint256("0x25756655bce43a9b72363c06979768cafba833a10de2e754fbef715a217ed241"));
+           assert(block.hashMerkleRoot == uint256("0x24d9749f733d5be0370f9a562f9c301c4f9e76be97ff4d745b3859b1269e388a"));
         }
         else
         {
-           assert(block.hashMerkleRoot == uint256("0xbe06386a1644f7448ff25d28862b6c28e3a334e4a58f1c5ebd99ee49daa370c7"));
+           assert(block.hashMerkleRoot == uint256("0x24d9749f733d5be0370f9a562f9c301c4f9e76be97ff4d745b3859b1269e388a"));
         }
 
         assert(block.GetHash() == (!fTestNet ? hashGenesisBlock : hashGenesisBlockTestNet));
