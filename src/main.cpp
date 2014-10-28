@@ -45,7 +45,7 @@ static CBigNum bnProofOfStakeLimitTestNet(~uint256(0) >> 20);
 unsigned int nStakeMinAge = 60 * 60 * 24 * 7; // minimum age for coin age - 10 days
 unsigned int nStakeMaxAge = 60 * 60 * 24 * 21; // stake age of full weight - 30 days
 unsigned int nStakeTargetSpacing = 2 * 60; // 2-minute block spacing
-int64_t nChainStartTime = 1414441500;
+int64_t nChainStartTime = 1414480500;
 int nCoinbaseMaturity = 5;
 CBlockIndex* pindexGenesisBlock = NULL;
 int nBestHeight = -1;
@@ -2703,17 +2703,17 @@ bool LoadBlockIndex(bool fAllowNew)
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-        block.nTime    = 1414441500;
+        block.nTime    = 1414480500;
         block.nBits    = bnProofOfWorkLimit.GetCompact();
-        block.nNonce   = 633760;
+        block.nNonce   = 0;
         if (fTestNet)
         {
-            block.nTime    = 1414441500;
+            block.nTime    = 1414480500;
             block.nBits    = bnProofOfWorkLimit.GetCompact();
-            block.nNonce   = 633760;
+            block.nNonce   = 0;
         }
 
-	   if (true  && (block.GetHash() != hashGenesisBlock)) {
+       if (true  && (block.GetHash() != hashGenesisBlock)) {
 	 
 		// This will figure out a valid hash and Nonce if you're
 		// creating a different genesis block:
@@ -2739,11 +2739,11 @@ bool LoadBlockIndex(bool fAllowNew)
 
         if (fTestNet)
         {
-           assert(block.hashMerkleRoot == uint256("0xe92088596b9921f1cf12b550f78ec656c790c5407273ca90dd823804d5a959a8"));
+           assert(block.hashMerkleRoot == uint256("0x482bfc354988c49c52fc05964221cd0424e07235ca3eb3189d916401f4cacfba"));
         }
         else
         {
-           assert(block.hashMerkleRoot == uint256("0xe92088596b9921f1cf12b550f78ec656c790c5407273ca90dd823804d5a959a8"));
+           assert(block.hashMerkleRoot == uint256("0x482bfc354988c49c52fc05964221cd0424e07235ca3eb3189d916401f4cacfba"));
         }
 
         assert(block.GetHash() == (!fTestNet ? hashGenesisBlock : hashGenesisBlockTestNet));
