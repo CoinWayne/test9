@@ -1076,9 +1076,8 @@ uint256 WantedByOrphan(const CBlock* pblockOrphan)
     return pblockOrphan->hashPrevBlock;
 }
 
-int64_t GetProofOfWorkReward(int64_t nFees)
+int64_t GetProofOfWorkReward(int64_t nFees, const int nHeight)
 {
-    int nHeight = pindexBest->nHeight + 1;
     int64_t nSubsidy = 1000 * COIN;
 
 	if(nHeight == 1)
@@ -1675,7 +1674,7 @@ bool CBlock::ConnectBlock(CTxDB& txdb, CBlockIndex* pindex, bool fJustCheck)
 
     if (IsProofOfWork()) 
     { 
-        int64_t nReward = GetProofOfWorkReward(nFees); 
+        int64_t nReward = GetProofOfWorkReward(nFees, pindex->nHeight); 
         // Check coinbase reward 
         if (vtx[0].GetValueOut() > nReward) 
             return DoS(50, error("ConnectBlock() : coinbase reward exceeded (actual=%d vs calculated=%d)", 
@@ -2156,7 +2155,7 @@ bool CBlock::CheckBlock(bool fCheckPOW, bool fCheckMerkleRoot, bool fCheckSig) c
             return DoS(50, error("CheckBlock() : coinstake timestamp violation nTimeBlock=%d nTimeTx=%u", GetBlockTime(), vtx[1].nTime));
 
         // NovaCoin: check proof-of-stake block signature
-        if (fCheckSig && !CheckBlockSignature(true))
+        if (fCheckSig && !CheckBlockSignature())
             return DoS(100, error("CheckBlock() : bad proof-of-stake block signature"));
      }
 
