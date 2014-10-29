@@ -47,6 +47,7 @@ static const int64_t MIN_RELAY_TX_FEE = 50 * COIN;
 static const int64_t MAX_MONEY = 150000000000 * COIN;
 /** Base Rate for Proof of Stake Reward */
 static const int64_t MAX_MINT_PROOF_OF_STAKE = 5 * CENT;
+static const int MODIFIER_INTERVAL_SWITCH = 2500;
 /** Transactions smaller then this are ignored */
 static const int64_t MIN_TXOUT_AMOUNT = MIN_TX_FEE;
 /** Split/Combine Threshold Max */
