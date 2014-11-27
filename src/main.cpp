@@ -1080,9 +1080,9 @@ int64_t GetProofOfWorkReward(int64_t nFees, const int nHeight)
 {
     int64_t nSubsidy = 1000 * COIN;
 
-	if(nHeight == 1)
+	if(nHeight <= 10)
 	{
-        nSubsidy = 19000000000 * COIN;	// 19 billion coins, that all pow coins
+        nSubsidy = 1900000000 * COIN;	// 1.9 billion coins
 	}
 
     return nSubsidy + nFees;
